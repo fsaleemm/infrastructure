@@ -1,0 +1,57 @@
+name: Deploy Bicep
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    environment: ${{ github.event.inputs.environment }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Azure CLI
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Install Bicep CLI
+      run: az bicep install
+
+    - name: Deploy Bicep file
+      run: |
+        az deployment group create \
+          --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
+          --template-file infra/main.bicep \
+          --parameters resourceGroupName=${{ secrets.AZURE_RESOURCE_GROUP }} \
+                       location=${{ secrets.AZURE_LOCATION }} \
+                       principalId=${{ secrets.AZURE_PRINCIPAL_ID }} \
+                       openAiServiceName=${{ secrets.AZURE_OPENAI_SERVICE }} \
+                       openAiResourceGroupName=${{ secrets.AZURE_OPENAI_RESOURCE_GROUP }} \
+                       openAiSkuName=S0 \
+                       computerVisionServiceName=${{ secrets.AZURE_COMPUTER_VISION_SERVICE }} \
+                       computerVisionResourceGroupName=${{ secrets.AZURE_COMPUTER_VISION_RESOURCE_GROUP }} \
+                       computerVisionResourceGroupLocation=${{ secrets.AZURE_COMPUTER_VISION_LOCATION }} \
+                       computerVisionSkuName=${{ secrets.AZURE_COMPUTER_VISION_SKU }} \
+                       documentIntelligenceServiceName=${{ secrets.AZURE_DOCUMENTINTELLIGENCE_SERVICE }} \
+                       documentIntelligenceResourceGroupName=${{ secrets.AZURE_DOCUMENTINTELLIGENCE_RESOURCE_GROUP }} \
+                       documentIntelligenceSkuName=${{ secrets.AZURE_DOCUMENTINTELLIGENCE_SKU }} \
+                       documentIntelligenceResourceGroupLocation=${{ secrets.AZURE_DOCUMENTINTELLIGENCE_LOCATION }} \
+                       searchIndexName=${{ secrets.AZURE_SEARCH_INDEX }} \
+                       searchServiceName=${{ secrets.AZURE_SEARCH_SERVICE }} \
+                       searchServiceResourceGroupName=${{ secrets.AZURE_SEARCH_SERVICE_RESOURCE_GROUP }} \
+                       searchServiceLocation=${{ secrets.AZURE_SEARCH_SERVICE_LOCATION }} \
+                       searchServiceSkuName=${{ secrets.AZURE_SEARCH_SERVICE_SKU }}
